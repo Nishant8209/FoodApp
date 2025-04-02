@@ -14,25 +14,32 @@ createdAt updatedAt discount orderId TokenNumber`;
 
 export const createOrderService = async (order: IOrder): Promise<IOrder> => {
   try {
+   
     const { products, totalAmount, sgst, cgst } = order;
 
-    let verifiedTotal = 0;
+    let verifiedTotal = 0.0;
     let allProducts = [];
+
     for (const item of products) {
       if (!mongoose.Types.ObjectId.isValid(`${item.product}`)) {
         throw new Error("Invalid product");
       }
+
       const product = await Product.findById(item.product).exec();
       if (!product) throw new Error("Invalid product");
-      verifiedTotal += product.price * item.quantity;
-      item.priceSnapshot = product.price;
+
+      const productPrice = parseFloat(product.price.toFixed(2)); // Ensure decimal precision
+      verifiedTotal += productPrice * item.quantity;
+
+      item.priceSnapshot = productPrice;
       allProducts.push(item);
     }
-
+   
     if (sgst) verifiedTotal += sgst;
-    if (cgst) verifiedTotal += cgst;
-  
-    if (parseFloat(verifiedTotal.toFixed(2)) !== totalAmount) {
+    if (cgst) verifiedTotal +=cgst;
+
+    // Correct total comparison with precision handling
+    if (parseFloat(verifiedTotal.toFixed(2)) !== parseFloat(totalAmount.toFixed(2))) {
       throw new Error(Messages.Order_Total_Mismatch);
     }
 
@@ -61,12 +68,12 @@ export const createOrderService = async (order: IOrder): Promise<IOrder> => {
     savedOrder.orderId = `ORD${year}${totalOrders + 1}`;
     const orderObj = await savedOrder.save();
 
-    console.log("TokenNumber:", orderObj.TokenNumber);
     return orderObj;
   } catch (error) {
     throw new Error((error as Error).message);
   }
 };
+
 
 export const getAllOrdersService = async (query: any, params: any = {}) => {
   try {
@@ -79,7 +86,7 @@ export const getAllOrdersService = async (query: any, params: any = {}) => {
       ),
     };
 
-    console.log("orderId", searchFilter);
+   
     const totalRecords = await Orders.countDocuments(searchFilter);
     const totalPages = Math.ceil(totalRecords / limit);
     const hasMore = page < totalPages;

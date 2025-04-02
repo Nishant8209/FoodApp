@@ -69,7 +69,7 @@ export const buildFilter = async (
       if (endDate) filter.createdAt.$lte = new Date(endDate);
     }
 
-    console.log('filter', filter);
+
     return filter;
   } catch (err) {
     console.error('Filter Query Error:', err);

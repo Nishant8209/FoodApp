@@ -32,9 +32,9 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
       Number(page),
       Number(limit)
     );
-    console.log('query',pipeline)
+ 
     const products = await Product.aggregate(pipeline);
-    // console.log('products',products)
+  
     const totalCount = await Product.countDocuments(await buildFilter(filterQuery));
     const hasMore = (Number(page) - 1) * Number(limit) + products.length < totalCount;
     successResponse(res, {
