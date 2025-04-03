@@ -7,7 +7,9 @@ interface PaymentResponse {
   details?: any;
 }
 
-export const createPayPalPayment = (totalAmount: number): Promise<PaymentResponse> => {
+export const createPayPalPayment = (
+  totalAmount: number
+): Promise<PaymentResponse> => {
   const formattedTotal = totalAmount.toFixed(2);
 
   const createPaymentJson = {
@@ -41,20 +43,22 @@ export const createPayPalPayment = (totalAmount: number): Promise<PaymentRespons
 
   return new Promise<PaymentResponse>((resolve, reject) => {
     paypal.payment.create(createPaymentJson, (error, payment) => {
-        if (error) {
-          console.error("PayPal Error:", JSON.stringify(error.response, null, 2));
-          return reject({ error: "Payment creation failed", details: error.response });
-        }
-      
+      if (error) {
+        console.error("PayPal Error:", JSON.stringify(error.response, null, 2));
+        return reject({
+          error: "Payment creation failed",
+          details: error.response,
+        });
+      }
 
-      
-        const approvalUrl = payment.links?.find((link) => link.rel === "approval_url")?.href;
-        if (approvalUrl) {
-          resolve({ approvalUrl, transactionId: payment.id });
-        } else {
-          reject({ error: "Approval URL not found", details: payment });
-        }
-      });
-      
+      const approvalUrl = payment.links?.find(
+        (link) => link.rel === "approval_url"
+      )?.href;
+      if (approvalUrl) {
+        resolve({ approvalUrl, transactionId: payment.id });
+      } else {
+        reject({ error: "Approval URL not found", details: payment });
+      }
+    });
   });
 };
